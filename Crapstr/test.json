@@ -1,0 +1,9 @@
+{"type":"FeatureCollection",
+	"features":[
+		{
+			"type":"Feature",
+			"goemetry":{"type":"Point", "coordinates": [102.0, 0.5]}
+		}
+	]
+
+}

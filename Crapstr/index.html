@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+		html {height:100%}
+		body {height:100%; width:100%; margin:0; padding:0;}
+	</style>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDV08HAd_j_u5yqMvVO4qpUmN020-JQqp8"></script>
+	<script type="text/javascript" src="map.js"></script>
+	<script>
+		var map;
+		var places = [
+			{
+				location: new google.maps.LatLng(41.850033,-87.650023),
+				description: "<p><b>Rating</b>: 3/5 Stars</p><p><b>Description</b>: Poorly ventilated.</p>"
+			},
+		
+		
+		{
+			location: new google.maps.LatLng(41.879084,-87.642168),
+			description: "<p><b>Rating</b>: 4/5 Stars</p><p><b>Description</b>: The seat was still warm, but it actually felt kind of nice.</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.879104, -87.635953),
+			description: "<p><b>Rating</b>: 4/5 Stars</p><p><b>Description</b>: Really nice, but the bathroom attendant gave me stage fright.</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.974102, -87.907369),
+			description: "<p><b>Rating</b>: 2/5 Stars</p><p><b>Description</b>: That's not water on the floor.</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.898750,-87.622879),
+			description: "<p><b>Rating</b>: 3/5 Stars</p><p><b>Description</b>: Pubes abound. </p>"
+		},
+		{
+			location: new google.maps.LatLng(41.891359, -87.607628),
+			description: "<p><b>Rating</b>: 3/5 Stars</p><p><b>Description</b>: Was a 5/5 Stars, but I'm rating this after I finished.</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.837856, -87.644086),
+			description: "<p><b>Rating</b>: 2/5 Stars</p><p><b>Description</b>: No dividers between urinals. Very uncomfortable. </p>"
+		},
+		{
+			location: new google.maps.LatLng(41.835205, -87.627044),
+			description: "<p><b>Rating</b>: 1/5 Stars</p><p><b>Description</b>: If Satan's got a favorite toilet, this is it. </p>"
+		},
+		{
+			location: new google.maps.LatLng(41.862269, -87.616747),
+			description: "<p><b>Rating</b>: 4/5 Stars</p><p><b>Description</b>: Probably cleaner than my bathroom at home if I'm being honest</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.880639, -87.674224),
+			description: "<p><b>Rating</b>: 5/5 Stars</p><p><b>Description</b>: Didn't even wipe the seat down beforehand. </p>"
+		},
+		{
+			location: new google.maps.LatLng(41.877576, -87.631990),
+			description: "<p><b>Rating</b>: 3/5 Stars</p><p><b>Description</b>: Underwhelming. </p>"
+		},
+		{
+			location: new google.maps.LatLng(41.879429, -87.623708),
+			description: "<p><b>Rating</b>: 2/5 Stars</p><p><b>Description</b>: Don't poop here.</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.879461, -87.644221),
+			description: "<p><b>Rating</b>: 4/5 Stars</p><p><b>Description</b>:This place is pretty neat.</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.885151, -87.629745),
+			description: "<p><b>Rating</b>: 2/5 Stars</p><p><b>Description</b>:Green room isn't so green anymore if you know what I mean.</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.883897, -87.627556),
+			description: "<p><b>Rating</b>: 4/5 Stars</p><p><b>Description</b>:So many floors, so many bathrooms!</p>"
+		},
+		{
+			location: new google.maps.LatLng(41.867896, -87.642619),
+			description: "<p><b>Rating</b>: 2/5 Stars</p><p><b>Description</b>:Beer shits.</p>" 
+		},
+		{
+			location: new google.maps.LatLng(41.882647, -87.623313),
+			description: "<p><b>Rating</b>: 3/5 Stars</p><p><b>Description</b>:Now we know why they call it the Bean.</p>" 
+		}
+		];
+		function initialize() {
+		  var mapOptions = {
+		    zoom: 15,
+		    center: new google.maps.LatLng(41.8762686,-87.6322661)
+		  };
+		  map = new google.maps.Map(document.getElementById('map-canvas'),
+		      mapOptions);
+
+		  // Try HTML5 geolocation
+		 /* if(navigator.geolocation) {
+		    navigator.geolocation.getCurrentPosition(function(position) {
+		      var pos = new google.maps.LatLng(position.coords.latitude,
+		                                       position.coords.longitude);
+
+		      var infowindow = new google.maps.InfoWindow({
+		        map: map,
+		        position: pos,
+		        content: 'Location found using HTML5.'
+		      });
+
+		      map.setCenter(pos);
+		    }, function() {
+		      handleNoGeolocation(true);
+		    });
+		  } else {
+		    // Browser doesn't support Geolocation
+		    handleNoGeolocation(false);
+		  }*/
+			places.forEach(function(place) {
+				var marker = new google.maps.Marker({
+					position: place.location,
+					icon: "graylet.png",
+					map: map	
+				});
+
+				var infowindow = new google.maps.InfoWindow({
+					content: place.description
+				});
+
+				google.maps.event.addListener(marker,'click',function(){
+					infowindow.open(map,marker);
+				});
+			});
+		}
+		
+		
+		/*function handleNoGeolocation(errorFlag) {
+		  if (errorFlag) {
+		    var content = 'Error: The Geolocation service failed.';
+		  } else {
+		    var content = 'Error: Your browser doesn\'t support geolocation.';
+		  }
+		 
+
+		  var options = {
+		    map: map,
+		    position: new google.maps.LatLng(41.8, -87.6),
+		    content: content
+		  };
+
+		  var infowindow = new google.maps.InfoWindow(options);
+		  map.setCenter(options.position);
+		}*/
+
+		google.maps.event.addDomListener(window, 'load', initialize);
+	</script>
+	<title>Crapstr</title>
+	<link rel="icon" href="graylet.png">
+</head>
+<body>
+<style>
+	body{font-family:verdana;
+		}
+	/*#logotext{margin-left: 10px;}*/
+	h1{margin-top: 10px;}
+</style>
+	
+	<div id="header">
+		<h1>Welcome to </h1><img src="logotextsmall.png"/>
+		<!-- <div id="logotext">
+			<img src="logotextsmall.png"/>
+		</div> -->
+		<p>Crapstr is the number one site to find and rate local toilets. Never make one of those ridiculous toilet paper seat covers again!</p>
+	</div>
+	<h2>Toilets near you:</h2>
+	<div id ="map-canvas" style="width:100%; height:100%"></div>
+		
+
+
+</body>
+<!-- <footer>
+	<div id="logo">
+		<img src="CrapstrLogoFinalSmall.png"/>
+	</div>
+</footer> -->
+</html>
