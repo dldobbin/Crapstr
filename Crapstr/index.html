@@ -58,6 +58,10 @@
 						infowindow.open(map,marker);
 					});
 				});
+
+				map.addListener('click', function(e) {
+					alert(e.latLng);
+				});
 			});
 		}
 
