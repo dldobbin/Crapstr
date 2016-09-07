@@ -4,86 +4,213 @@
 	<style type="text/css">
 		html {height:100%}
 		body {height:100%; width:100%; margin:0; padding:0;}
+		.control {
+			height: 20px;
+			background-color: #fff; 
+			border: 2px solid #fff;
+			border-radius: 3px;
+			box-shadow: 0 2px 6px rgba(0,0,0,.3);
+			margin: 10px;
+			padding: 10px 10px 10px 10px;
+			cursor: pointer;
+			user-select: none;
+			-webkit-user-select: none;
+		}
+		.control.selected {background-color: #ddd;}
+
+		.rating {
+			background-image: url('icon.png');
+			width: 150px;
+			height: 30px;
+		}
+
+		.star-5 {
+			background-position: 0px;
+		}
+
+		.star-4 {
+			background-position: -30px;
+		}
+
+		.star-3 {
+			background-position: -60px;
+		}
+
+		.star-2 {
+			background-position: -90px;
+		}
+
+		.star-1 {
+			background-position: -120px;
+		}
+
+		.star-0 {
+			background-position: -150px;
+		}
+
+		.star-4-5 {
+			background-position: -300px;
+		}
+
+		.star-3-5 {
+			background-position: -330px;
+		}
+
+		.star-2-5 {
+			background-position: -360px;
+		}
+
+		.star-1-5 {
+			background-position: -390px;
+		}
+
+		.star-0-5 {
+			background-position: -420px;
+		}
+
 	</style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDV08HAd_j_u5yqMvVO4qpUmN020-JQqp8"></script>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCWJcO-gIheo7bBxqkBh1y-5ZCo1BBiuaE&libraries=places"></script>
 	<script type="text/javascript" src="map.js"></script>
 	<script>
 		var map;
-		var places;
+		var markers = [];
+		var infowindow = new google.maps.InfoWindow();
+		var topControl;
 		function initialize() {
-			$.ajax({
-				url: './data.json',				
-			}).done(function(data) {
-				places = JSON.parse(data);
-			    var mapOptions = {
-			      zoom: 15,
-			      center: new google.maps.LatLng(41.8762686,-87.6322661)
-			    };
-			    map = new google.maps.Map(document.getElementById('map-canvas'),
-			        mapOptions);
+			//Create map
+		    var mapOptions = {
+		      zoom: 15,
+		      center: new google.maps.LatLng(41.8762686,-87.6322661),
+		      clickableIcons: false,
+		      mapTypeControl: false
+		    };
+		    map = new google.maps.Map(document.getElementById('map-canvas'),
+		        mapOptions);
 
-			  // Try HTML5 geolocation
-			 /* if(navigator.geolocation) {
-			    navigator.geolocation.getCurrentPosition(function(position) {
-			      var pos = new google.maps.LatLng(position.coords.latitude,
-			                                       position.coords.longitude);
+		    //Add controls
+		    var pooControl = createControl('poo');
+		    pooControl.addEventListener('click', function() {
+		    	if (!$(pooControl).hasClass('selected')) {
+		    		$('.selected').removeClass('selected');
+		    		$(pooControl).addClass('selected');
 
-			      var infowindow = new google.maps.InfoWindow({
-			        map: map,
-			        position: pos,
-			        content: 'Location found using HTML5.'
-			      });
+		    		clearMarkers();
 
-			      map.setCenter(pos);
-			    }, function() {
-			      handleNoGeolocation(true);
-			    });
-			  } else {
-			    // Browser doesn't support Geolocation
-			    handleNoGeolocation(false);
-			  }*/
-				places.forEach(function(place) {
-					var marker = new google.maps.Marker({
-						position: new google.maps.LatLng(place.lat, place.lon),
-						icon: "graylet.png",
-						map: map	
-					});
+		    		var sql = 'SELECT * FROM 1l58quwTJ_4GHi7azXgEDSjUweIro3z3c_Tdll4QC WHERE ST_INTERSECTS(location,CIRCLE(LATLNG' + map.getCenter() + ',5000))';
+		    		var url = 'https://www.googleapis.com/fusiontables/v1/query?sql=' + sql + '&key=AIzaSyCWJcO-gIheo7bBxqkBh1y-5ZCo1BBiuaE';
 
-					var infowindow = new google.maps.InfoWindow({
-						content: place.description
-					});
+		    		$.ajax({
+		    			url: url,
+		    			dataType: 'json'
+		    		}).done(function(data) {
+		    			data.rows.forEach(function(row) {
+		    				[lat,lng] = row[1].split(',');
+		    				createToilet(new google.maps.LatLng(lat,lng), row[0]);
+		    		});
 
-					google.maps.event.addListener(marker,'click',function(){
-						infowindow.open(map,marker);
-					});
-				});
+		    		map.controls[google.maps.ControlPosition.TOP_CENTER].pop();
+		    	}
+		    });
+		    var searchControl = createControl('search');
+		    searchControl.addEventListener('click', function() {
+		    	if (!$(searchControl).hasClass('selected')) {
+		    		$('.selected').removeClass('selected');
+		    		$(searchControl).addClass('selected');
 
-				map.addListener('click', function(e) {
-					alert(e.latLng);
+		    		clearMarkers();
+
+		    		if (!topControl) {
+		    			topControl = document.createElement('div');
+		    			$(topControl).addClass('control');
+		    			var searchField = document.createElement('input');
+		    			searchField.type = 'text';
+		    			topControl.appendChild(searchField);
+		    			var button = document.createElement('input');
+		    			button.type = 'button';
+		    			button.value = 'Search';
+		    			button.addEventListener('click', function() {
+		    				clearMarkers();
+							var service = new google.maps.places.PlacesService(map);
+						    var request = {
+						    	location: map.getCenter(),
+						    	radius: 5000,
+						    	keyword: searchField.value
+						    };
+						    service.radarSearch(request, function(results, status) {
+						    	if (status == google.maps.places.PlacesServiceStatus.OK) {
+						    		results.forEach(function(result) {
+						    			createToilet(result.geometry.location, result.place_id);
+						    		});
+						    	}
+						    });
+		    			});
+		    			topControl.appendChild(button);
+		    		}
+
+		    		map.controls[google.maps.ControlPosition.TOP_CENTER].push(topControl);
+		    	}
+		    });
+		    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchControl);
+		    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(pooControl);
+
+		    /**/
+			/*places.forEach(function(place) {
+				createToilet(new google.maps.LatLng(place.lat, place.lon), '<div><p>' +
+																				place.description +
+																			'</p>' +
+																			'<div style="float:right">edit</div></div>');
+			});*/
+			$(pooControl).click();
+		}
+
+		function createControl(label) {
+			var d = document.createElement('div');
+			$(d).addClass('control');
+			$(d).text(label);
+			d.index = 1;
+			return d;
+		}
+
+		function createToilet(loc, placeId) {
+			var marker = new google.maps.Marker({
+				position: loc,
+				icon: "graylet.png",
+				map: map
+			});
+			markers.push(marker);
+
+			google.maps.event.addListener(marker,'click',function() {
+				var sql = "SELECT * FROM 1nKtjFslKAKR59eYsCCW8vbpeznAJeqe_7ZFS3KL1 WHERE placeId='" + placeId + "'";
+				var url = 'https://www.googleapis.com/fusiontables/v1/query?sql=' + sql + '&key=AIzaSyCWJcO-gIheo7bBxqkBh1y-5ZCo1BBiuaE';
+
+				$.ajax({
+					url: url,
+					dataType: 'json'
+				}).done(function(data) {
+					var content = '';
+					var total = 0;
+					if (data.rows) {
+						data.rows.forEach(function(row) {
+							content += "<hr><div><p class='rating star-" + row[1] + "'/><p><b>Description</b>: " + row[2] + "</div>";
+							total += Number(row[1]);
+						});
+						content = "<div><p class='rating star-" + String(Math.round(2*total/data.rows.length)/2).replace('.','-') + "'/></div>" + content;
+					} else {
+						content = "No reviews yet! Be the first to review this terlet!";
+					}
+					infowindow.setContent(content);
+					infowindow.open(map,marker);
 				});
 			});
 		}
 
-		
-		
-		/*function handleNoGeolocation(errorFlag) {
-		  if (errorFlag) {
-		    var content = 'Error: The Geolocation service failed.';
-		  } else {
-		    var content = 'Error: Your browser doesn\'t support geolocation.';
-		  }
-		 
-
-		  var options = {
-		    map: map,
-		    position: new google.maps.LatLng(41.8, -87.6),
-		    content: content
-		  };
-
-		  var infowindow = new google.maps.InfoWindow(options);
-		  map.setCenter(options.position);
-		}*/
+		function clearMarkers() {
+			markers.forEach(function(marker) {
+    			marker.setMap(null);
+    		});
+    		markers = [];
+		}
 
 		google.maps.event.addDomListener(window, 'load', initialize);
 	</script>
@@ -94,7 +221,6 @@
 <style>
 	body{font-family:verdana;
 		}
-	/*#logotext{margin-left: 10px;}*/
 	h1{margin-top: 10px;}
 </style>
 	
@@ -107,13 +233,5 @@
 	</div>
 	<h2>Toilets near you:</h2>
 	<div id ="map-canvas" style="width:100%; height:100%"></div>
-		
-
-
 </body>
-<!-- <footer>
-	<div id="logo">
-		<img src="CrapstrLogoFinalSmall.png"/>
-	</div>
-</footer> -->
 </html>
