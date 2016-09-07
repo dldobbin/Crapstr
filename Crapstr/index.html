@@ -104,9 +104,10 @@
 		    			url: url,
 		    			dataType: 'json'
 		    		}).done(function(data) {
-		    			data.rows.forEach(function(row) {
+		    			(data.rows || []).forEach(function(row) {
 		    				[lat,lng] = row[1].split(',');
 		    				createToilet(new google.maps.LatLng(lat,lng), row[0]);
+		    			});
 		    		});
 
 		    		map.controls[google.maps.ControlPosition.TOP_CENTER].pop();
