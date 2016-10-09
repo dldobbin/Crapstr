@@ -4,17 +4,16 @@
 	<link rel="stylesheet" type="text/css" href={{ url_for("static", filename="crapstr.css") }}>
 	<script type="text/javascript" src={{ url_for("static", filename="jquery-3.1.1.min.js") }}></script>
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCWJcO-gIheo7bBxqkBh1y-5ZCo1BBiuaE&libraries=places"></script>
+	<script type="text/javascript" src={{ url_for("static", filename="crapstr.js") }}></script>
 	<title>Crapstr</title>
 	<link rel="icon" href={{ url_for("static", filename="graylet.png") }}>
 </head>
 <body>	
-	<div id="header">
+	<!--<div id="header">
 		<h1>Welcome to </h1><img src={{ url_for("static", filename="logotextsmall.png") }}/>
 		<p>Crapstr is the number one site to find and rate local toilets. Never make one of those ridiculous toilet paper seat covers again!</p>
 	</div>
-	<h2>Toilets near you:</h2>
+	<h2>Toilets near you:</h2>-->
 	<div id ="map-canvas" style="width:100%; height:100%"></div>
 </body>
-
-	<script type="text/javascript" src={{ url_for("static", filename="crapstr.js") }}></script>
 </html>

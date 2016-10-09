@@ -1,5 +1,5 @@
 $(document).ready(function() {
-	/*var map;
+	var map;
 	var markers = [];
 	var infowindow = new google.maps.InfoWindow();
 	var searchBar;
@@ -15,11 +15,11 @@ $(document).ready(function() {
 	        mapOptions);
 
 	    //Add controls
-	    var pooButton = createControl('poo');
-	    pooButton.addEventListener('click', function() {
-	    	if (!$(pooButton).hasClass('selected')) {
+	    var pooButton = $('<div class="control" style="zIndex: 1;">poo</div>');
+	    pooButton.click(function() {
+	    	if (!pooButton.hasClass('selected')) {
 	    		$('.selected').removeClass('selected');
-	    		$(pooButton).addClass('selected');
+	    		pooButton.addClass('selected');
 
 	    		clearMarkers();
 
@@ -28,30 +28,29 @@ $(document).ready(function() {
 	    		map.controls[google.maps.ControlPosition.TOP_CENTER].pop();
 	    	}
 	    });
-	    var searchButton = createControl('search');
-	    searchButton.addEventListener('click', function() {
-	    	if (!$(searchButton).hasClass('selected')) {
+	    var searchButton = $('<div class="control" style="zIndex: 1;">search</div>');
+	    searchButton.click(function() {
+	    	if (!searchButton.hasClass('selected')) {
 	    		$('.selected').removeClass('selected');
-	    		$(searchButton).addClass('selected');
+	    		searchButton.addClass('selected');
 
 	    		clearMarkers();
 
 	    		if (!searchBar) {
-	    			searchBar = document.createElement('div');
-	    			$(searchBar).addClass('control');
-	    			var searchField = document.createElement('input');
-	    			searchField.type = 'text';
-	    			searchBar.appendChild(searchField);
-	    			var button = document.createElement('input');
-	    			button.type = 'button';
-	    			button.value = 'Search';
-	    			button.addEventListener('click', function() {
+	    			searchBar = $('<div class="control">'
+	    							+ '<form>'
+	    								+ '<input type="text" />'
+	    								+ '<input type="submit" value="Search" />'
+	    							+ '</form>'
+	    						+ '</div>');
+	    			searchBar.children().submit(function(event) {
+	    				event.preventDefault();
 	    				clearMarkers();
 						var service = new google.maps.places.PlacesService(map);
 					    var request = {
 					    	location: map.getCenter(),
 					    	radius: 5000,
-					    	keyword: searchField.value
+					    	keyword: $(this).children('input[type=text]')[0].value
 					    };
 					    service.radarSearch(request, function(results, status) {
 					    	if (status == google.maps.places.PlacesServiceStatus.OK) {
@@ -61,24 +60,15 @@ $(document).ready(function() {
 					    	}
 					    });
 	    			});
-	    			searchBar.appendChild(button);
 	    		}
 
-	    		map.controls[google.maps.ControlPosition.TOP_CENTER].push(searchBar);
+	    		map.controls[google.maps.ControlPosition.TOP_CENTER].push(searchBar[0]);
 	    	}
 	    });
-	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchButton);
-	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(pooButton);
+	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchButton[0]);
+	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(pooButton[0]);
 
-		$(pooButton).click();
-	}
-
-	function createControl(label) {
-		var d = document.createElement('div');
-		$(d).addClass('control');
-		$(d).text(label);
-		d.index = 1;
-		return d;
+		pooButton.click();
 	}
 
 	function placeKnownMarkers() {
@@ -125,12 +115,8 @@ $(document).ready(function() {
 					content = "No reviews yet! Be the first to review this terlet!";
 					isNew = true;
 				}
-				content = $("<div class='infowindow_container'>" + content + "</div>");
-				var add_button = document.createElement('div');
-				$(add_button).addClass('add_button');
-				$(add_button).text('Add Review');
-				content.append(add_button);
-				add_button.addEventListener('click', function() {
+				content = $("<div class='infowindow_container'>" + content + "<div class='button'>Add Review</div></div>");
+				content.children('.button').click(function() {
 					createSubmissionForm(content[0], isNew, placeId);
 				});
 				infowindow.setContent(content[0]);
@@ -147,49 +133,39 @@ $(document).ready(function() {
 	}
 
 	function createSubmissionForm(oldContent, isNew, placeId) {
-		var content = $("<div class='infowindow_container'></div>");
-		var ratingElement = document.createElement('p');
+		var content = $("<div class='infowindow_container'>"
+						+ "<div class='rating star-0'>"
+							+ "<div></div>"
+							+ "<div></div>"
+							+ "<div></div>"
+							+ "<div></div>"
+							+ "<div></div>"
+						+ "</div>"
+						+ "<p><b>Description</b>: <input type='text' /></p>"
+						+ "<div class='cancel button'>Cancel</div>"
+						+ "<div class='submit button'>Submit</div>"
+					  + "</div>");
 		var rating = 0;
-		ratingElement.className = 'rating star-0';
-		for (var i = 4; i >= 0; i--) {
-			(function(iCopy) {
-				var d = document.createElement('div');
-				d.addEventListener('mouseover', function() {
-					ratingElement.className = 'rating star-' + String(5-iCopy);
-				});
-				d.addEventListener('mouseout', function() {
-					ratingElement.className = 'rating star-' + String(rating);
-				});
-				d.addEventListener('click', function() {
-					rating = 5-iCopy;
-				});
-				$(ratingElement).append(d);
-			}(i));
-		};
-		content.append(ratingElement);
-		var des_element = $("<p><b>Description</b>: </p>")[0];
-		var input = $("<input type='text'/>")[0];
-		$(des_element).append(input);
-		content.append(des_element);
-
-		var cancel_button = document.createElement('div');
-		$(cancel_button).addClass('add_button');
-		$(cancel_button).text('Cancel');
-		cancel_button.addEventListener('click', function() {
+		content.find('.rating div').mouseover(function() {
+			content.children('.rating').removeClass().addClass('rating star-' + String($(this).index() + 1));
+		});
+		content.find('.rating div').mouseout(function() {
+			content.children('.rating').removeClass().addClass('rating star-' + rating);
+		});
+		content.find('.rating div').click(function() {
+			rating = $(this).index() + 1;
+		});
+		
+		content.find('.cancel').click(function() {
 			infowindow.setContent(oldContent);
 		});
-		content.append(cancel_button);
-
-		var submit_button = document.createElement('div');
-		$(submit_button).addClass('add_button');
-		$(submit_button).text('Submit');
-		submit_button.addEventListener('click', function() {
-			console.log({placeId: placeId, desc: input.value, rating: rating, isNew: isNew});
+		
+		content.find('.submit').click(function() {
+			console.log({placeId: placeId, desc: content.find('input[type=text]')[0].value, rating: rating, isNew: isNew});
 		});
-		content.append(submit_button);
 
 		infowindow.setContent(content[0]);
 	}
 
-	google.maps.event.addDomListener(window, 'load', initialize);*/
+	google.maps.event.addDomListener(window, 'load', initialize);
 });
