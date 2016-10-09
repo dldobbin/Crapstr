@@ -63,6 +63,7 @@ $(document).ready(function() {
 	    		}
 
 	    		map.controls[google.maps.ControlPosition.TOP_CENTER].push(searchBar[0]);
+	    		searchBar.find('input[type=text]').focus();
 	    	}
 	    });
 	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchButton[0]);
@@ -72,16 +73,13 @@ $(document).ready(function() {
 	}
 
 	function placeKnownMarkers() {
-		var sql = 'SELECT * FROM 1l58quwTJ_4GHi7azXgEDSjUweIro3z3c_Tdll4QC WHERE ST_INTERSECTS(location,CIRCLE(LATLNG' + map.getCenter() + ',5000))';
-		var url = 'https://www.googleapis.com/fusiontables/v1/query?sql=' + sql + '&key=AIzaSyCWJcO-gIheo7bBxqkBh1y-5ZCo1BBiuaE';
-
 		$.ajax({
-			url: url,
-			dataType: 'json'
+			url: '/location',
+			dataType: 'json',
+			data: {lat: map.getCenter().lat(), lon: map.getCenter().lng()}
 		}).done(function(data) {
-			(data.rows || []).forEach(function(row) {
-				[lat,lng] = row[1].split(',');
-				createToilet(new google.maps.LatLng(lat,lng), row[0]);
+			data.forEach(function(row) {
+				createToilet(new google.maps.LatLng(row.lat,row.lon), row.placeId);
 			});
 		});
 	}
@@ -95,29 +93,24 @@ $(document).ready(function() {
 		markers.push(marker);
 
 		google.maps.event.addListener(marker,'click',function() {
-			var sql = "SELECT * FROM 1nKtjFslKAKR59eYsCCW8vbpeznAJeqe_7ZFS3KL1 WHERE placeId='" + placeId + "'";
-			var url = 'https://www.googleapis.com/fusiontables/v1/query?sql=' + sql + '&key=AIzaSyCWJcO-gIheo7bBxqkBh1y-5ZCo1BBiuaE';
-
 			$.ajax({
-				url: url,
+				url: '/reviews/'+placeId,
 				dataType: 'json'
 			}).done(function(data) {
 				var content = '';
-				var total = 0;
 				var isNew = false;
-				if (data.rows) {
-					data.rows.forEach(function(row) {
-						content += "<hr><div><p class='rating star-" + row[1] + "'/><p><b>Description</b>: " + row[2] + "</p></div>";
-						total += Number(row[1]);
+				if (data.reviews.length) {
+					data.reviews.forEach(function(review) {
+						content += "<hr><div><p class='rating star-" + review.rating + "'/><p><b>Description</b>: " + review.description + "</p></div>";
 					});
-					content = "<div><p class='rating star-" + String(Math.round(2*total/data.rows.length)/2).replace('.','-') + "'/></div>" + content;
+					content = "<div><p class='rating star-" + String(data.avg).replace('.','-') + "'/></div>" + content;
 				} else {
 					content = "No reviews yet! Be the first to review this terlet!";
 					isNew = true;
 				}
 				content = $("<div class='infowindow_container'>" + content + "<div class='button'>Add Review</div></div>");
 				content.children('.button').click(function() {
-					createSubmissionForm(content[0], isNew, placeId);
+					createSubmissionForm(content[0], isNew, loc, placeId);
 				});
 				infowindow.setContent(content[0]);
 				infowindow.open(map,marker);
@@ -132,7 +125,7 @@ $(document).ready(function() {
 		markers = [];
 	}
 
-	function createSubmissionForm(oldContent, isNew, placeId) {
+	function createSubmissionForm(oldContent, isNew, loc, placeId) {
 		var content = $("<div class='infowindow_container'>"
 						+ "<div class='rating star-0'>"
 							+ "<div></div>"
@@ -155,13 +148,11 @@ $(document).ready(function() {
 		content.find('.rating div').click(function() {
 			rating = $(this).index() + 1;
 		});
-		
 		content.find('.cancel').click(function() {
 			infowindow.setContent(oldContent);
-		});
-		
+		});		
 		content.find('.submit').click(function() {
-			console.log({placeId: placeId, desc: content.find('input[type=text]')[0].value, rating: rating, isNew: isNew});
+			console.log({placeId: placeId, loc: loc, desc: content.find('input[type=text]')[0].value, rating: rating, isNew: isNew});
 		});
 
 		infowindow.setContent(content[0]);
