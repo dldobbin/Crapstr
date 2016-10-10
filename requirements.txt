@@ -1,0 +1,6 @@
+psycopg2
+
+flask
+
+gevent
+gunicorn

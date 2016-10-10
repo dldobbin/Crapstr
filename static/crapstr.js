@@ -93,28 +93,34 @@ $(document).ready(function() {
 		markers.push(marker);
 
 		google.maps.event.addListener(marker,'click',function() {
-			$.ajax({
-				url: '/reviews/'+placeId,
-				dataType: 'json'
-			}).done(function(data) {
-				var content = '';
-				var isNew = false;
-				if (data.reviews.length) {
-					data.reviews.forEach(function(review) {
-						content += "<hr><div><p class='rating star-" + review.rating + "'/><p><b>Description</b>: " + review.description + "</p></div>";
-					});
-					content = "<div><p class='rating star-" + String(data.avg).replace('.','-') + "'/></div>" + content;
-				} else {
-					content = "No reviews yet! Be the first to review this terlet!";
-					isNew = true;
-				}
-				content = $("<div class='infowindow_container'>" + content + "<div class='button'>Add Review</div></div>");
-				content.children('.button').click(function() {
-					createSubmissionForm(content[0], isNew, loc, placeId);
-				});
-				infowindow.setContent(content[0]);
-				infowindow.open(map,marker);
+			postReviews(loc, placeId, function() {
+				infowindow.open(map, marker);
 			});
+		});
+	}
+
+	function postReviews(loc, placeId, f) {
+		$.ajax({
+			url: '/reviews/'+placeId,
+			dataType: 'json'
+		}).done(function(data) {
+			var content = '';
+			var isNew = false;
+			if (data.reviews.length) {
+				data.reviews.forEach(function(review) {
+					content += "<hr><div><p class='rating star-" + review.rating + "'/><p><b>Description</b>: " + review.description + "</p></div>";
+				});
+				content = "<div><p class='rating star-" + String(data.avg).replace('.','-') + "'/></div>" + content;
+			} else {
+				content = "No reviews yet! Be the first to review this terlet!";
+				isNew = true;
+			}
+			content = $("<div class='infowindow_container'>" + content + "<div class='button'>Add Review</div></div>");
+			content.children('.button').click(function() {
+				createSubmissionForm(content[0], isNew, loc, placeId);
+			});
+			infowindow.setContent(content[0]);
+			f();
 		});
 	}
 
@@ -152,7 +158,24 @@ $(document).ready(function() {
 			infowindow.setContent(oldContent);
 		});		
 		content.find('.submit').click(function() {
-			console.log({placeId: placeId, loc: loc, desc: content.find('input[type=text]')[0].value, rating: rating, isNew: isNew});
+			if (isNew) {
+				$.ajax({
+					url: '/location',
+					method: 'post',
+					data: {placeId: placeId, lon: loc.lng(), lat: loc.lat(), description: content.find('input[type=text]')[0].value, rating: rating}
+				}).done(function() {
+					postReviews(loc, placeId, function() {});
+				});
+			} else {
+				$.ajax({
+					url: '/reviews',
+					method: 'post',
+					data: {placeId: placeId, description: content.find('input[type=text]')[0].value, rating: rating}
+				}).done(function() {
+					postReviews(loc, placeId, function() {});
+				});
+			}
+			//console.log({, loc: loc,,});
 		});
 
 		infowindow.setContent(content[0]);

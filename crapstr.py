@@ -11,8 +11,14 @@ app = Flask(__name__)
 def index():
 	return render_template('index.html')
 
-@app.route('/location')
-def all_locations():
+@app.route('/location', methods=['GET','POST'])
+def locations():
+	if request.method == 'POST':
+		with get_db() as db:
+			with db.cursor() as cur:
+				cur.execute("insert into locations values (%s, ST_GeographyFromText('point(%s %s)'))",(request.form['placeId'], float(request.form['lon']), float(request.form['lat']),))
+				cur.execute("insert into reviews (place_id, rating, description) values (%s, %s, %s)", (request.form['placeId'], request.form['rating'], request.form['description'],))
+		return ''
 	with get_db() as db:
 		with db.cursor() as cur:
 			cur.execute("select place_id, ST_AsGeoJSON(location) as location from locations where ST_Distance(location, ST_GeographyFromText('point(%s %s)')) < 5000", (float(request.args['lon']), float(request.args['lat']),))
@@ -28,6 +34,14 @@ def location(place_id):
 				return jsonify('')
 			loc = json.loads(row['location'])
 			return jsonify({'placeId': row['place_id'], 'lat': loc['coordinates'][1], 'lon': loc['coordinates'][0]})
+
+@app.route('/reviews', methods=['POST'])
+def reviews():
+	if request.method == 'POST':
+		with get_db() as db:
+			with db.cursor() as cur:
+				cur.execute("insert into reviews (place_id, rating, description) values (%s, %s, %s)", (request.form['placeId'], request.form['rating'], request.form['description'],))
+	return ''
 
 @app.route('/reviews/<string:place_id>')
 def reviews_for(place_id):
