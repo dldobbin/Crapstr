@@ -1,13 +1,28 @@
 $(document).ready(function() {
 	var map;
+	var center;
 	var markers = [];
 	var infowindow = new google.maps.InfoWindow();
 	var searchBar;
+
+	function checkGeoLocation() {
+		center = new google.maps.LatLng(41.8762686, -87.6322661);
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(function(position) {
+				center = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+				initialize();
+			}, function() {
+				initialize();
+			});
+		} else {
+			initialize();
+		}
+	}
+
 	function initialize() {
-		//Create map
 	    var mapOptions = {
 	      zoom: 15,
-	      center: new google.maps.LatLng(41.8762686,-87.6322661),
+	      center: center,
 	      clickableIcons: false,
 	      mapTypeControl: false
 	    };
@@ -69,7 +84,7 @@ $(document).ready(function() {
 	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchButton[0]);
 	    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(pooButton[0]);
 
-		pooButton.click();
+	    pooButton.click();
 	}
 
 	function placeKnownMarkers() {
@@ -181,5 +196,5 @@ $(document).ready(function() {
 		infowindow.setContent(content[0]);
 	}
 
-	google.maps.event.addDomListener(window, 'load', initialize);
+	google.maps.event.addDomListener(window, 'load', checkGeoLocation);
 });
