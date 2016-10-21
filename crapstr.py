@@ -1,4 +1,5 @@
 from flask import Flask, url_for, render_template, g, jsonify, request
+import requests
 import json
 import psycopg2
 import psycopg2.extras
@@ -54,6 +55,12 @@ def reviews_for(place_id):
 				cur.execute('select avg(rating) from reviews where place_id=%s', (place_id,))
 				avg = round(2*float(cur.fetchone()[0]))/2
 			return jsonify(reviews=reviews, avg=avg)
+
+@app.route('/map_js')
+def map_js():
+	url = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCWJcO-gIheo7bBxqkBh1y-5ZCo1BBiuaE&libraries=places"
+	r = requests.get(url)
+	return r.text
 
 def connect_db():
     """Connects to the specific database."""
