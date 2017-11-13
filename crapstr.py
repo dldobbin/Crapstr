@@ -23,7 +23,13 @@ def locations():
 	with get_db() as db:
 		with db.cursor() as cur:
 			cur.execute("select place_id, ST_AsGeoJSON(location) as location from locations where ST_Distance(location, ST_GeographyFromText('point(%s %s)')) < 5000", (float(request.args['lon']), float(request.args['lat']),))
-			return jsonify([{'placeId': row['place_id'], 'lat': json.loads(row['location'])['coordinates'][1], 'lon': json.loads(row['location'])['coordinates'][0]} for row in cur.fetchall()])
+			locations = []
+			for row in cur.fetchall():
+				location = json.loads(row['location'])
+				cur.execute("select avg(rating) from reviews where place_id=%s", (row['place_id'],))
+				avg = cur.fetchone()[0]
+				locations.append({'placeId': row['place_id'], 'lat': location['coordinates'][1], 'lon': location['coordinates'][0], 'avg': float(avg)})
+			return jsonify(locations)
 
 @app.route('/location/<string:place_id>')
 def location(place_id):
