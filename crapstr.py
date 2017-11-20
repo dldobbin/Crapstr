@@ -60,7 +60,7 @@ def reviews_for(place_id):
 			if reviews:
 				cur.execute('select avg(rating) from reviews where place_id=%s', (place_id,))
 				avg = round(2*float(cur.fetchone()[0]))/2
-			return jsonify(reviews=reviews, avg=avg)
+			return jsonify(placeId=place_id, reviews=reviews, avg=avg)
 
 @app.route('/map_js')
 def map_js():
