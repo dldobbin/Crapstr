@@ -17,25 +17,22 @@ def locations():
 	if request.method == 'POST':
 		with get_db() as db:
 			with db.cursor() as cur:
-				cur.execute("insert into locations values (%s, ST_GeographyFromText('point(%s %s)'))",(request.form['placeId'], float(request.form['lon']), float(request.form['lat']),))
-				cur.execute("insert into reviews (place_id, rating, description) values (%s, %s, %s)", (request.form['placeId'], request.form['rating'], request.form['description'],))
+				cur.execute("insert into reviews (place_id, rating, description, location) values (%s, %s, %s, ST_GeographyFromText('point(%s %s)'))", (request.form['placeId'], request.form['rating'], request.form['description'], float(request.form['lon']), float(request.form['lat']),))
 		return ''
 	with get_db() as db:
 		with db.cursor() as cur:
-			cur.execute("select place_id, ST_AsGeoJSON(location) as location from locations where ST_Distance(location, ST_GeographyFromText('point(%s %s)')) < 5000", (float(request.args['lon']), float(request.args['lat']),))
+			cur.execute("select place_id, avg(rating) as avg, ST_AsGeoJSON(location) as location from reviews where ST_Distance(location, ST_GeographyFromText('point(%s %s)')) < 5000 group by place_id, location", (float(request.args['lon']), float(request.args['lat']),))
 			locations = []
 			for row in cur.fetchall():
 				location = json.loads(row['location'])
-				cur.execute("select avg(rating) from reviews where place_id=%s", (row['place_id'],))
-				avg = cur.fetchone()[0]
-				locations.append({'placeId': row['place_id'], 'lat': location['coordinates'][1], 'lon': location['coordinates'][0], 'avg': float(avg)})
+				locations.append({'placeId': row['place_id'], 'lat': location['coordinates'][1], 'lon': location['coordinates'][0], 'avg': float(row['avg'])})
 			return jsonify(locations)
 
 @app.route('/location/<string:place_id>')
 def location(place_id):
 	with get_db() as db:
 		with db.cursor() as cur:
-			cur.execute('select place_id, ST_AsGeoJSON(location) as location from locations where place_id=%s', (place_id,))
+			cur.execute('select place_id, ST_AsGeoJSON(location) as location from reviews where place_id=%s', (place_id,))
 			row = cur.fetchone()
 			if not row:
 				return jsonify('')
